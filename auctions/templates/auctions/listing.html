@@ -6,6 +6,19 @@
 <img src="{{ listing.image }}" style="height: 300px">
 <p>{{ listing.description }}</p>
 <p>{{ listing.bid }}</p>
+{% if not is_seller %}
+    <form action="{% url 'place_bid' listing.id %}", method="post">
+        {% csrf_token %}
+        <input type="number" placeholder="Bid" name="buyer_bid" step=".01"> <!-- https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/number -->
+        <input type="submit" value="Place bid">
+    </form>
+{% endif %}
+{% if is_seller %}
+    <form action="{% url 'close_listing' listing.id %}", method="post">
+        {% csrf_token %}
+        <input type="submit" value="Close listing">
+    </form>
+{% endif %}
 <p>Seller: {{ listing.seller }}</p>
 {% if not watchlist %}
     <form action="{% url 'watchlist' %}", method="post">

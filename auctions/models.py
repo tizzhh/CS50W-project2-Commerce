@@ -12,6 +12,9 @@ class listings(models.Model):
     category = models.CharField(max_length=32, blank=True)
     date = models.DateTimeField(auto_now=True)
     seller = models.CharField(max_length=64)
+    winner = models.CharField(max_length=64, blank=True)
+    bidder_id = models.IntegerField()
+    is_active = models.BooleanField()
 
 class User(AbstractUser):
     watchlist = models.ManyToManyField(listings, blank=True, related_name="watchlist")

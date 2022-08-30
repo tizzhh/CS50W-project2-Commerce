@@ -1,3 +1,4 @@
+from logging import PlaceHolder
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
 from django.http import HttpResponse, HttpResponseRedirect
@@ -12,7 +13,7 @@ from .models import User, listings, bids, comments
 
 def index(request):
     return render(request, "auctions/index.html", {
-        "listings": listings.objects.all()
+        "listings": listings.objects.filter(is_active=True)
     })
 
 
@@ -93,17 +94,32 @@ def create_listing(request):
 
 def listing(request, listing_id):
     listing = listings.objects.get(id=listing_id)
+    is_seller = False
+    watchlist = None
+    if str(request.user) == (listing.seller):
+        is_seller = True
     # https://stackoverflow.com/questions/16181188/django-doesnotexist
-    try:
-        watchlist = request.user.watchlist.get(id=listing_id)
-    except ObjectDoesNotExist:
-        watchlist = None
+    if request.user.is_authenticated:
+        try:
+            watchlist = request.user.watchlist.get(id=listing_id)
+        except ObjectDoesNotExist:
+            watchlist = None
+    if listing.winner:
+        if int(listing.winner) == int(request.user.id):
+            return render(request, "auctions/error.html",{
+                "message": "You won!"
+            })
+        else:
+            return render(request, "auctions/error.html",{
+                "message": "Bid closed!"
+            })      
     return render(request, "auctions/listing.html", {
         "listing": listing,
-        "watchlist": watchlist
+        "watchlist": watchlist,
+        "is_seller": is_seller
     })
 
-@login_required
+@login_required(login_url='login')
 def watchlist(request):
     # https://stackoverflow.com/questions/26048602/how-do-i-get-the-name-of-a-form-after-a-post-request-in-django
     print(request.POST)
@@ -114,3 +130,25 @@ def watchlist(request):
     return render(request, "auctions/watchlist.html", {
         "listings": request.user.watchlist.all()
     })
+
+@login_required(login_url='login')
+def place_bid(request, listing_id):
+    listing = listings.objects.get(id=listing_id)
+    current_bid = float(listing.bid)
+    buyer_bid = float(request.POST["buyer_bid"])
+    if buyer_bid > current_bid:
+        listing.bid = buyer_bid
+        listing.bidder_id = request.user.id
+        listing.save()
+    else:
+        return render(request, "auctions/error.html",{
+            "message": "Your bid is too small :("
+        })
+    return HttpResponseRedirect(reverse("listing",  args=(listing_id, ))) 
+
+@login_required(login_url='login')
+def close_listing(request, listing_id):
+    listing = listings.objects.get(id=listing_id)
+    listing.winner = listing.bidder_id
+    listing.save()
+    return HttpResponseRedirect(reverse("listing",  args=(listing_id, )))

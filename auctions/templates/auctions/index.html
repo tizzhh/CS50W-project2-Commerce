@@ -9,7 +9,7 @@
             <img src="{{ listing.image }}" style="height: 300px">
         {% endif %}
         <p><a href="{% url 'listing' listing.id %}">{{ listing.name }}</p></a>
-        <p>Price: {{ listing.bid }}</p>
+        <p>Price: {{ listing.current_price }}</p>
         {% if listing.description %}
             <p>{{ listing.description }}</p>
         {% endif %}

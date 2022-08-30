@@ -1,4 +1,6 @@
+from glob import escape
 from logging import PlaceHolder
+from multiprocessing import current_process
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
 from django.http import HttpResponse, HttpResponseRedirect
@@ -12,9 +14,11 @@ from .models import User, listings, bids, comments
 
 
 def index(request):
-    return render(request, "auctions/index.html", {
-        "listings": listings.objects.filter(is_active=True)
-    })
+    return render(
+        request,
+        "auctions/index.html",
+        {"listings": listings.objects.filter(is_active=True)},
+    )
 
 
 def login_view(request):
@@ -30,9 +34,11 @@ def login_view(request):
             login(request, user)
             return HttpResponseRedirect(reverse("index"))
         else:
-            return render(request, "auctions/login.html", {
-                "message": "Invalid username and/or password."
-            })
+            return render(
+                request,
+                "auctions/login.html",
+                {"message": "Invalid username and/or password."},
+            )
     else:
         return render(request, "auctions/login.html")
 
@@ -51,22 +57,25 @@ def register(request):
         password = request.POST["password"]
         confirmation = request.POST["confirmation"]
         if password != confirmation:
-            return render(request, "auctions/register.html", {
-                "message": "Passwords must match."
-            })
+            return render(
+                request, "auctions/register.html", {"message": "Passwords must match."}
+            )
 
         # Attempt to create new user
         try:
             user = User.objects.create_user(username, email, password)
             user.save()
         except IntegrityError:
-            return render(request, "auctions/register.html", {
-                "message": "Username already taken."
-            })
+            return render(
+                request,
+                "auctions/register.html",
+                {"message": "Username already taken."},
+            )
         login(request, user)
         return HttpResponseRedirect(reverse("index"))
     else:
         return render(request, "auctions/register.html")
+
 
 class NewTaskForm(forms.Form):
     name = forms.CharField(label="Listing name")
@@ -75,6 +84,7 @@ class NewTaskForm(forms.Form):
     image = forms.URLField(label="Photo URL", required=False)
     category = forms.CharField(label="Category", required=False)
 
+
 @login_required
 def create_listing(request):
     if request.method == "POST":
@@ -82,20 +92,27 @@ def create_listing(request):
         description = request.POST["description"]
         bid = request.POST["bid"]
         image = request.POST["image"]
+        category = request.POST["category"]
         seller = request.user
-        listings.objects.create(name=name, description=description, bid=bid, image=image, seller=seller)
+        listings.objects.create(
+            name=name,
+            description=description,
+            bid=bid,
+            image=image,
+            seller=seller,
+            current_price=bid,
+            category=category,
+        )
         return HttpResponseRedirect(reverse("index"))
-        
-        
-    return render(request, "auctions/create_listing.html", {
-        "form": NewTaskForm()
-    })
+
+    return render(request, "auctions/create_listing.html", {"form": NewTaskForm()})
 
 
 def listing(request, listing_id):
     listing = listings.objects.get(id=listing_id)
     is_seller = False
     watchlist = None
+    price = listing.bid
     if str(request.user) == (listing.seller):
         is_seller = True
     # https://stackoverflow.com/questions/16181188/django-doesnotexist
@@ -104,22 +121,41 @@ def listing(request, listing_id):
             watchlist = request.user.watchlist.get(id=listing_id)
         except ObjectDoesNotExist:
             watchlist = None
+    try:
+        price = bids.objects.get(listing_id=listing_id).bid
+    except ObjectDoesNotExist:
+        pass
     if listing.winner:
         if int(listing.winner) == int(request.user.id):
-            return render(request, "auctions/error.html",{
-                "message": "You won!"
-            })
+            return render(
+                request,
+                "auctions/listing.html",
+                {
+                    "listing": listing,
+                    "watchlist": watchlist,
+                    "is_seller": is_seller,
+                    "price": price,
+                    "comments": comments.objects.all(),
+                    "win": True,
+                },
+            )
         else:
-            return render(request, "auctions/error.html",{
-                "message": "Bid closed!"
-            })      
-    return render(request, "auctions/listing.html", {
-        "listing": listing,
-        "watchlist": watchlist,
-        "is_seller": is_seller
-    })
+            return render(request, "auctions/error.html", {"message": "Bid closed!"})
 
-@login_required(login_url='login')
+    return render(
+        request,
+        "auctions/listing.html",
+        {
+            "listing": listing,
+            "watchlist": watchlist,
+            "is_seller": is_seller,
+            "price": price,
+            "comments": comments.objects.all(),
+        },
+    )
+
+
+@login_required(login_url="login")
 def watchlist(request):
     # https://stackoverflow.com/questions/26048602/how-do-i-get-the-name-of-a-form-after-a-post-request-in-django
     print(request.POST)
@@ -127,28 +163,58 @@ def watchlist(request):
         request.user.watchlist.add(listings.objects.get(id=request.POST["id"]))
     if request.method == "POST" and "remove" in request.POST:
         request.user.watchlist.remove(listings.objects.get(id=request.POST["id"]))
-    return render(request, "auctions/watchlist.html", {
-        "listings": request.user.watchlist.all()
-    })
+    return render(
+        request, "auctions/watchlist.html", {"listings": request.user.watchlist.all()}
+    )
 
-@login_required(login_url='login')
+
+@login_required(login_url="login")
 def place_bid(request, listing_id):
     listing = listings.objects.get(id=listing_id)
-    current_bid = float(listing.bid)
+    # current_bid = float(listing.bid)
+    starting_bid = float(listing.bid)
+    try:
+        current_bid = float(bids.objects.get(listing_id=listing_id).bid)
+    except ObjectDoesNotExist:
+        current_bid = 0
+        bids.objects.create(
+            bid=current_bid, listing_id=listing_id, user_id=request.user.id
+        )
     buyer_bid = float(request.POST["buyer_bid"])
-    if buyer_bid > current_bid:
+    """if buyer_bid > starting_bid:
         listing.bid = buyer_bid
         listing.bidder_id = request.user.id
+        listing.save()"""
+    if buyer_bid > starting_bid and buyer_bid > current_bid:
+        bid = bids.objects.get(listing_id=listing_id)
+        listing.current_price = buyer_bid
+        bid.bid = buyer_bid
+        bid.user_id = request.user.id
+        bid.listing_id = listing_id
+        bid.save()
         listing.save()
     else:
-        return render(request, "auctions/error.html",{
-            "message": "Your bid is too small :("
-        })
-    return HttpResponseRedirect(reverse("listing",  args=(listing_id, ))) 
+        return render(
+            request, "auctions/error.html", {"message": "Your bid is too small :("}
+        )
+    return HttpResponseRedirect(reverse("listing", args=(listing_id,)))
 
-@login_required(login_url='login')
+
+@login_required(login_url="login")
 def close_listing(request, listing_id):
+    try:
+        winner = bids.objects.get(listing_id=listing_id).user_id
+    except ObjectDoesNotExist:
+        winner = -1
     listing = listings.objects.get(id=listing_id)
-    listing.winner = listing.bidder_id
+    listing.winner = winner
+    listing.is_active = False
     listing.save()
-    return HttpResponseRedirect(reverse("listing",  args=(listing_id, )))
+    return HttpResponseRedirect(reverse("listing", args=(listing_id,)))
+
+
+@login_required(login_url="login")
+def comment(request, listing_id):
+    comment = request.POST["comment"]
+    comments.objects.create(comment=comment, listing_id=listing_id, user=request.user)
+    return HttpResponseRedirect(reverse("listing", args=(listing_id,)))

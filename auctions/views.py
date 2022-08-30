@@ -5,6 +5,7 @@ from django.shortcuts import render
 from django.urls import reverse
 from django import forms
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ObjectDoesNotExist
 
 from .models import User, listings, bids, comments
 
@@ -80,7 +81,8 @@ def create_listing(request):
         description = request.POST["description"]
         bid = request.POST["bid"]
         image = request.POST["image"]
-        listings.objects.create(name=name, description=description, bid=bid, image=image)
+        seller = request.user
+        listings.objects.create(name=name, description=description, bid=bid, image=image, seller=seller)
         return HttpResponseRedirect(reverse("index"))
         
         
@@ -91,14 +93,24 @@ def create_listing(request):
 
 def listing(request, listing_id):
     listing = listings.objects.get(id=listing_id)
+    # https://stackoverflow.com/questions/16181188/django-doesnotexist
+    try:
+        watchlist = request.user.watchlist.get(id=listing_id)
+    except ObjectDoesNotExist:
+        watchlist = None
     return render(request, "auctions/listing.html", {
-        "listing": listing
+        "listing": listing,
+        "watchlist": watchlist
     })
 
 @login_required
 def watchlist(request):
-    if request.method == "POST":
-        pass
+    # https://stackoverflow.com/questions/26048602/how-do-i-get-the-name-of-a-form-after-a-post-request-in-django
+    print(request.POST)
+    if request.method == "POST" and "add" in request.POST:
+        request.user.watchlist.add(listings.objects.get(id=request.POST["id"]))
+    if request.method == "POST" and "remove" in request.POST:
+        request.user.watchlist.remove(listings.objects.get(id=request.POST["id"]))
     return render(request, "auctions/watchlist.html", {
         "listings": request.user.watchlist.all()
     })

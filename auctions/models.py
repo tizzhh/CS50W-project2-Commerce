@@ -11,9 +11,10 @@ class listings(models.Model):
     image = models.URLField()
     category = models.CharField(max_length=32, blank=True)
     date = models.DateTimeField(auto_now=True)
+    seller = models.CharField(max_length=64)
 
 class User(AbstractUser):
-    watchlist = models.ManyToManyField(listings, blank=True, related_name="listings")
+    watchlist = models.ManyToManyField(listings, blank=True, related_name="watchlist")
     pass
 
 class bids(models.Model):

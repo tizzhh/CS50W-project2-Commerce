@@ -4,9 +4,6 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 
 
-class User(AbstractUser):
-    pass
-
 class listings(models.Model):
     name = models.CharField(max_length=64)
     description = models.CharField(max_length=512, blank=True)
@@ -15,6 +12,9 @@ class listings(models.Model):
     category = models.CharField(max_length=32, blank=True)
     date = models.DateTimeField(auto_now=True)
 
+class User(AbstractUser):
+    watchlist = models.ManyToManyField(listings, blank=True, related_name="listings")
+    pass
 
 class bids(models.Model):
     pass
@@ -22,9 +22,9 @@ class bids(models.Model):
 class comments(models.Model):
     pass
 
-class watchlist(models.Model):
+'''class watchlist(models.Model):
     users = models.ForeignKey(User, on_delete=models.CASCADE, blank=True)
-    listings = models.ManyToManyField(listings, blank=True, related_name="listings")
+    listings = models.ManyToManyField(listings, blank=True, related_name="listings")'''
 
 '''class watchlist(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)

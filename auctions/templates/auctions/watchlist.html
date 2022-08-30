@@ -4,6 +4,7 @@
 
 <h2>Watchlist Listings</h2>
 
+    {% for listing in listings %}
     <div style="border:1px solid black; margin: 10px">
         {% if listing.image %}
             <img src="{{ listing.image }}" style="height: 300px">
@@ -18,5 +19,5 @@
         {% endif %}
         <p>{{ listing.date }}</p>
     </div>
-
+    {% endfor %}
 {% endblock %}

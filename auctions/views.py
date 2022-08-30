@@ -6,7 +6,7 @@ from django.urls import reverse
 from django import forms
 from django.contrib.auth.decorators import login_required
 
-from .models import User, listings, watchlist, bids, comments
+from .models import User, listings, bids, comments
 
 
 def index(request):
@@ -80,7 +80,8 @@ def create_listing(request):
         description = request.POST["description"]
         bid = request.POST["bid"]
         image = request.POST["image"]
-        listing = listings.objects.create(name=name, description=description, bid=bid, image=image)
+        listings.objects.create(name=name, description=description, bid=bid, image=image)
+        return HttpResponseRedirect(reverse("index"))
         
         
     return render(request, "auctions/create_listing.html", {
@@ -95,11 +96,9 @@ def listing(request, listing_id):
     })
 
 @login_required
-def Watchlist(request):
-    user = User.objects.get(id=request.user.id)
-    print(user)
+def watchlist(request):
     if request.method == "POST":
         pass
     return render(request, "auctions/watchlist.html", {
-        "listing": user.listings.all()
+        "listings": request.user.watchlist.all()
     })

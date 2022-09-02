@@ -220,3 +220,22 @@ def comment(request, listing_id):
     comment = request.POST["comment"]
     comments.objects.create(comment=comment, listing_id=listing_id, user=request.user)
     return HttpResponseRedirect(reverse("listing", args=(listing_id,)))
+
+def categories(request):
+    # categories = listings.objects.all()
+    # https://www.codegrepper.com/code-examples/python/django+get+distinct+values+from+queryset
+    categories = listings.objects.values('category').distinct()
+    print(categories)
+    '''untupled_categories = []
+    for category in categories:
+        category = category[0]
+        if category not in untupled_categories:
+            untupled_categories.append(category)
+    print(untupled_categories)'''
+    return render(request, "auctions/categories.html", {
+        "categories": categories
+    })
+
+def category(request):
+    # print(category)
+    pass

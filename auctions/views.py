@@ -137,7 +137,7 @@ def listing(request, listing_id):
                     "watchlist": watchlist,
                     "is_seller": is_seller,
                     "price": price,
-                    "comments": comments.objects.all(),
+                    "comments": comments.objects.filter(listing_id=listing_id),
                     "win": True,
                 },
             )
@@ -152,7 +152,7 @@ def listing(request, listing_id):
             "watchlist": watchlist,
             "is_seller": is_seller,
             "price": price,
-            "comments": comments.objects.all(),
+            "comments": comments.objects.filter(listing_id=listing_id),
         },
     )
 

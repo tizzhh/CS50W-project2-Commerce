@@ -18,9 +18,7 @@ def index(request):
     return render(
         request,
         "auctions/index.html",
-        {"listings": listings.objects.filter(is_active=True),
-        "categories": False
-        },
+        {"listings": listings.objects.filter(is_active=True), "categories": False},
     )
 
 
@@ -224,21 +222,20 @@ def comment(request, listing_id):
     comments.objects.create(comment=comment, listing_id=listing_id, user=request.user)
     return HttpResponseRedirect(reverse("listing", args=(listing_id,)))
 
+
 def categories(request):
     # categories = listings.objects.all()
     # https://www.codegrepper.com/code-examples/python/django+get+distinct+values+from+queryset
-    categories = listings.objects.values('category').filter(is_active=True).distinct()
+    categories = listings.objects.values("category").filter(is_active=True).distinct()
     print(categories)
-    return render(request, "auctions/categories.html", {
-        "categories": categories
-    })
+    return render(request, "auctions/categories.html", {"categories": categories})
+
 
 def category(request, category):
     print(category)
     # print(re.sub("^{'[a-zA-Z]+': '([a-zA-Z]+)'}$", r"\1", category))
     # category = re.sub("^{'[a-zA-Z]+': '([a-zA-Z 0-9]+)'}$", r"\1", category)
     listingss = listings.objects.filter(category=category, is_active=True)
-    return render(request, "auctions/index.html", {
-        "listings": listingss,
-        "categories": True
-    })
+    return render(
+        request, "auctions/index.html", {"listings": listingss, "categories": True}
+    )

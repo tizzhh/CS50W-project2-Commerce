@@ -93,6 +93,8 @@ def create_listing(request):
         bid = request.POST["bid"]
         image = request.POST["image"]
         category = request.POST["category"]
+        if category == "":
+            category = "Not specified"
         seller = request.user
         listings.objects.create(
             name=name,

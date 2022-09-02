@@ -10,6 +10,8 @@ from django import forms
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ObjectDoesNotExist
 
+import re
+
 from .models import User, listings, bids, comments
 
 
@@ -17,7 +19,9 @@ def index(request):
     return render(
         request,
         "auctions/index.html",
-        {"listings": listings.objects.filter(is_active=True)},
+        {"listings": listings.objects.filter(is_active=True),
+        "categories": False
+        },
     )
 
 
@@ -224,8 +228,7 @@ def comment(request, listing_id):
 def categories(request):
     # categories = listings.objects.all()
     # https://www.codegrepper.com/code-examples/python/django+get+distinct+values+from+queryset
-    categories = listings.objects.values('category').distinct()
-    print(categories)
+    categories = listings.objects.values('category').filter(is_active=True).distinct()
     '''untupled_categories = []
     for category in categories:
         category = category[0]
@@ -236,6 +239,13 @@ def categories(request):
         "categories": categories
     })
 
-def category(request):
-    # print(category)
-    pass
+def category(request, category):
+    print(category)
+    print(re.sub("^{'[a-zA-Z]+': '([a-zA-Z]+)'}$", r"\1", category))
+    # I don't know why, but category.category from categories.html doesn't work, simple category gives me a dict, so I'm converting that string to the one I need
+    category = re.sub("^{'[a-zA-Z]+': '([a-zA-Z 0-9]+)'}$", r"\1", category)
+    listingss = listings.objects.filter(category=category, is_active=True)
+    return render(request, "auctions/index.html", {
+        "listings": listingss,
+        "categories": True
+    })

@@ -35,7 +35,7 @@
             <img src="{{ listing.image }}" style="height: 300px">
         {% endif %}
         <div>
-            <span><a href="{% url 'listing' listing.id %}">{{ listing.name }}</a></span>
+            <span><a href="{% url 'listing' listing.id %}" id="listing_name">{{ listing.name }}</a></span>
             <span>Price: {{ listing.current_price }}</span>
             {% if listing.description %}
                 <span>{{ listing.description }}</span>
@@ -43,7 +43,7 @@
             {% if listing.category %}
                 <span>Category: <a href="{% url 'category' listing.category %}">{{ listing.category }}</span>
             {% endif %}
-            <span>{{ listing.date }}</span>
+            <span id="listing_date">{{ listing.date }}</span>
         </div>
     </div>
     {% endfor %}

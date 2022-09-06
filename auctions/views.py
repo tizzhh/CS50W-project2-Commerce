@@ -174,7 +174,6 @@ def watchlist(request):
 @login_required(login_url="login")
 def place_bid(request, listing_id):
     listing = listings.objects.get(id=listing_id)
-    # current_bid = float(listing.bid)
     starting_bid = float(listing.bid)
     try:
         current_bid = float(bids.objects.get(listing_id=listing_id).bid)
@@ -184,10 +183,6 @@ def place_bid(request, listing_id):
             bid=current_bid, listing_id=listing_id, user_id=request.user.id
         )
     buyer_bid = float(request.POST["buyer_bid"])
-    """if buyer_bid > starting_bid:
-        listing.bid = buyer_bid
-        listing.bidder_id = request.user.id
-        listing.save()"""
     if buyer_bid > starting_bid and buyer_bid > current_bid:
         bid = bids.objects.get(listing_id=listing_id)
         listing.current_price = buyer_bid

@@ -6,7 +6,7 @@
 </div>
 <div>
 {% for category in categories %}
-    <p><a href="{% url 'category' category.category %}">{{ category.category }}</a></p>
+    <p class="category"><a href="{% url 'category' category.category %}">{{ category.category }}</a></p>
 {% endfor %}
 </div>
 {% endblock %}

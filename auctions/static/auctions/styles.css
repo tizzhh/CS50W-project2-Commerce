@@ -7,7 +7,6 @@ body {
     margin-bottom: 10px;
     border-radius: 10px;
     display: flex;
-    width: 100%;
 }
 
 img { 
@@ -48,4 +47,13 @@ img {
 
 #create_listing button[type="submit"]{
     margin-top: 10px;
+}
+
+#post_comment{
+    margin-bottom: 27px;
+}
+
+textarea {
+    width:50%; 
+    height: 200px;
 }

@@ -159,13 +159,15 @@ def listing(request, listing_id):
 
 
 @login_required(login_url="login")
-def watchlist(request):
+def watchlist(request, listing_id):
     # https://stackoverflow.com/questions/26048602/how-do-i-get-the-name-of-a-form-after-a-post-request-in-django
     print(request.POST)
     if request.method == "POST" and "add" in request.POST:
         request.user.watchlist.add(listings.objects.get(id=request.POST["id"]))
+        return HttpResponseRedirect(reverse("listing", args=(listing_id,)))
     if request.method == "POST" and "remove" in request.POST:
         request.user.watchlist.remove(listings.objects.get(id=request.POST["id"]))
+        return HttpResponseRedirect(reverse("listing", args=(listing_id,)))
     return render(
         request, "auctions/watchlist.html", {"listings": request.user.watchlist.all()}
     )
@@ -219,7 +221,6 @@ def comment(request, listing_id):
 
 
 def categories(request):
-    # categories = listings.objects.all()
     # https://www.codegrepper.com/code-examples/python/django+get+distinct+values+from+queryset
     categories = listings.objects.values("category").filter(is_active=True).distinct()
     print(categories)
@@ -228,8 +229,6 @@ def categories(request):
 
 def category(request, category):
     print(category)
-    # print(re.sub("^{'[a-zA-Z]+': '([a-zA-Z]+)'}$", r"\1", category))
-    # category = re.sub("^{'[a-zA-Z]+': '([a-zA-Z 0-9]+)'}$", r"\1", category)
     listingss = listings.objects.filter(category=category, is_active=True)
     return render(
         request, "auctions/index.html", {"listings": listingss, "categories": True}

@@ -80,8 +80,8 @@ def register(request):
 
 class NewTaskForm(forms.Form):
     name = forms.CharField(label="Listing name")
-    description = forms.CharField(label="Description", required=False)
-    bid = forms.DecimalField(label="Starting bid", max_digits=100, decimal_places=2)
+    description = forms.CharField(label="Description", required=False, max_length=250)
+    bid = forms.DecimalField(label="Starting bid", max_digits=100, decimal_places=2, min_value=0, max_value=1000000)
     image = forms.URLField(label="Photo URL", required=False)
     category = forms.CharField(label="Category", required=False)
 

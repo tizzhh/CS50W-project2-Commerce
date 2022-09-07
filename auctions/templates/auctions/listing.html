@@ -51,7 +51,7 @@
 <div>
     <form action="{% url 'comment' listing.id %}", method="post">
         {% csrf_token %}
-        <textarea name="comment" style="width:50%; height: 200px">Comment</textarea>
+        <textarea name="comment" style="width:50%; height: 200px" placeholder="Comment" maxlength="5000"></textarea>
         <input type="submit" value="Post comment">
     </form>
 </div>

@@ -35,7 +35,6 @@
 {% if watchlist %}
     <form action="{% url 'watchlist' listing.id %}", method="post">
         {% csrf_token %}
-        <input type="text" value="{{ listing.id }}" name="id" style="display: none;">
         <button type="submit" class="btn btn-primary" name="remove">Remove from watchlist</button>
     </form>
 {% endif %}

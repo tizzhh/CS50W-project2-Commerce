@@ -80,7 +80,7 @@ def register(request):
 
 class NewTaskForm(forms.Form):
     name = forms.CharField(label="Listing name")
-    description = forms.CharField(label="Description", required=False, max_length=250)
+    description = forms.CharField(label="Description", max_length=250)
     bid = forms.DecimalField(label="Starting bid", max_digits=100, decimal_places=2, min_value=0, max_value=1000000)
     image = forms.URLField(label="Photo URL", required=False)
     category = forms.CharField(label="Category", required=False)
@@ -129,6 +129,8 @@ def listing(request, listing_id):
     except ObjectDoesNotExist:
         pass
     if listing.winner:
+        if not request.user.id:
+            return render(request, "auctions/error.html", {"message": "Bid closed!"})
         if int(listing.winner) == int(request.user.id):
             return render(
                 request,
@@ -161,12 +163,11 @@ def listing(request, listing_id):
 @login_required(login_url="login")
 def watchlist(request, listing_id):
     # https://stackoverflow.com/questions/26048602/how-do-i-get-the-name-of-a-form-after-a-post-request-in-django
-    print(request.POST)
     if request.method == "POST" and "add" in request.POST:
-        request.user.watchlist.add(listings.objects.get(id=request.POST["id"]))
+        request.user.watchlist.add(listings.objects.get(id=listing_id))
         return HttpResponseRedirect(reverse("listing", args=(listing_id,)))
     if request.method == "POST" and "remove" in request.POST:
-        request.user.watchlist.remove(listings.objects.get(id=request.POST["id"]))
+        request.user.watchlist.remove(listings.objects.get(id=listing_id))
         return HttpResponseRedirect(reverse("listing", args=(listing_id,)))
     return render(
         request, "auctions/watchlist.html", {"listings": request.user.watchlist.all()}
